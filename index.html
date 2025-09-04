@@ -151,27 +151,54 @@
 
         // --- UTILITY FUNCTIONS ---
         function copyToClipboard(text, buttonEl) {
+            if (!text && text !== '') {
+                return;
+            }
+            
+            // Try modern Clipboard API first
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showCopySuccess(buttonEl);
+                }).catch(err => {
+                    fallbackCopyTextToClipboard(text, buttonEl);
+                });
+            } else {
+                // Fallback for older browsers or non-secure contexts
+                fallbackCopyTextToClipboard(text, buttonEl);
+            }
+        }
+
+        function showCopySuccess(buttonEl) {
+            if (buttonEl) {
+                buttonEl.innerHTML = ICONS.check;
+                buttonEl.classList.add('copied');
+                setTimeout(() => {
+                    buttonEl.innerHTML = ICONS.copy;
+                    buttonEl.classList.remove('copied');
+                }, 1500);
+            }
+        }
+
+        function fallbackCopyTextToClipboard(text, buttonEl) {
             const textarea = document.createElement('textarea');
             textarea.value = text;
-            textarea.style.position = 'absolute';
+            textarea.style.position = 'fixed';
             textarea.style.left = '-9999px';
+            textarea.style.top = '-9999px';
+            textarea.style.opacity = '0';
             document.body.appendChild(textarea);
+            textarea.focus();
             textarea.select();
+            
             try {
                 const successful = document.execCommand('copy');
                 if (successful) {
-                    buttonEl.innerHTML = ICONS.check;
-                    buttonEl.classList.add('copied');
-                    setTimeout(() => {
-                        buttonEl.innerHTML = ICONS.copy;
-                        buttonEl.classList.remove('copied');
-                    }, 1500);
-                } else {
-                    console.error('Fallback: Copying text command was unsuccessful');
+                    showCopySuccess(buttonEl);
                 }
             } catch (err) {
                 console.error('Copy failed: ', err);
             }
+            
             document.body.removeChild(textarea);
         }
 
@@ -260,7 +287,7 @@
                 // Prevent event bubbling
                 event.stopPropagation();
                 
-                const target = event.target;
+                const target = event.target.closest('button') || event.target;
                 if (!target) return;
 
                 if (target.matches('.copy-btn')) {
@@ -268,13 +295,24 @@
                     let textToCopy;
                     if (funcId) {
                         const config = allFieldConfigs.find(f => f.id === funcId);
-                        textToCopy = config.getValueFunc();
-                        const inputEl = document.getElementById(`${funcId.replace(/\./g, '-')}-input`);
-                        if(inputEl) inputEl.value = textToCopy;
+                        if (config && config.getValueFunc) {
+                            textToCopy = config.getValueFunc();
+                            const inputEl = document.getElementById(`${funcId.replace(/\./g, '-')}-input`);
+                            if(inputEl) inputEl.value = textToCopy;
+                        }
                     } else {
-                        textToCopy = document.getElementById(target.dataset.inputId).value;
+                        const inputId = target.dataset.inputId;
+                        if (inputId) {
+                            const inputEl = document.getElementById(inputId);
+                            if (inputEl) {
+                                textToCopy = inputEl.value;
+                            }
+                        }
                     }
-                    copyToClipboard(textToCopy, target);
+                    
+                    if (textToCopy !== undefined && textToCopy !== null) {
+                        copyToClipboard(textToCopy, target);
+                    }
                 }
                 else if (target.matches('.add-item-btn')) {
                     // Prevent multiple rapid clicks
