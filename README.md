@@ -62,7 +62,7 @@ See QuickCopy in action:
 
 ## Getting Started
 
-1. Clone this repository
+1. Clone /downlaod this repository
 2. Open `index.html` in any modern web browser
 3. Start filling in your information
 4. Your data will be automatically saved and restored on future visits
