@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Application Quick Copy</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* A lighter gray (slate-50) */
+        }
+        .card {
+            background-color: white;
+            border-radius: 0.75rem; /* rounded-xl */
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            transition: all 0.2s ease-in-out;
+        }
+        .card:hover {
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            transform: translateY(-2px);
+        }
+        .copy-btn {
+            position: absolute;
+            right: 0.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: #e5e7eb; /* gray-200 */
+            color: #4b5563; /* gray-600 */
+            border-radius: 9999px; /* rounded-full */
+            padding: 0.375rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease-in-out;
+            border: none;
+            cursor: pointer;
+        }
+        .copy-btn:hover {
+            background-color: #d1d5db; /* gray-300 */
+        }
+        .copy-btn.copied {
+            background-color: #16a34a; /* green-600 */
+            color: white;
+        }
+        .password-toggle-btn {
+            position: absolute;
+            right: 3.2rem; /* Position it left of the copy button */
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6b7280; /* gray-500 */
+            cursor: pointer;
+            padding: 0.25rem;
+        }
+         /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #a8a29e; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #78716c; }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-6xl mx-auto">
+        <header class="text-center mb-10">
+            <div class="flex justify-between items-start mb-6">
+                <div class="flex-1"></div>
+                <div class="text-center flex-1">
+                    <h1 class="text-3xl md:text-4xl font-bold text-gray-800 bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-purple-500 pb-2">
+                        Application Quick Copy
+                    </h1>
+                    <p class="text-gray-600 mt-2">Your personal, one-click copy/paste dashboard for job applications.</p>
+                </div>
+                <div class="flex-1 flex justify-end">
+                    <button id="reset-btn" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-semibold transition-colors">
+                        Clear All Data
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main class="grid grid-cols-1 lg:grid-cols-3 gap-6" id="main-container">
+            <!-- All content is now dynamically generated into this container -->
+        </main>
+    </div>
+
+    <script>
+        // --- DATA STORE ---
+        const defaultAppData = {
+            personal: { firstName: "John", lastName: "Doe" },
+            address: { line1: "123 Imaginary Lane", city: "Somewhere", province: "Dreamland", postalCode: "A1B 2C3", country: "Fantasyland" },
+            contact: { email: "john.doe@example.com", phone: "+1 (555) 123-4567", linkedin: "https://linkedin.com/in/johndoe-sample", portfolio: "https://johndoe-portfolio.example.com" },
+            credentials: { username: "johndoe", password: "Password123!" },
+            preferences: { salary: "A gazillion dollars (but will settle for pizza)", startDate: "Yesterday (but tomorrow works too)", relocation: "Will move to Mars if needed" },
+            snippets: { summary: "Professional coffee consumer and keyboard warrior with a passion for turning caffeine into code...", authQ1: "Absolutely! (I think?)", authQ2: "No, but I identify as employed." },
+            education: [
+                { degree: "Bachelor of Procrastination", university: "University of Last Minute", location: "Panic City, ST", startDate: "Sept 2018", endDate: "Eventually 2022" },
+                { degree: "Master of Google-Fu", university: "Stack Overflow Institute", location: "Internet, WWW", startDate: "Jan 2020", endDate: "Still Learning" }
+            ],
+            experience: [
+                { title: "Chief Meme Officer", company: "Totally Real Corp", location: "Remote, Earth", startDate: "Jan 2023", endDate: "Present", details: "• Increased team morale by 420% through strategic deployment of cat GIFs\n• Mastered the art of looking busy during Zoom meetings\n• Successfully avoided making coffee for the office (remote work perks)" },
+                { title: "Professional Rubber Duck", company: "Debug & Chill LLC", location: "Bathtub, Home", startDate: "Mar 2021", endDate: "Dec 2022", details: "• Listened to countless programming problems without judgment\n• Provided silent emotional support to frustrated developers\n• Perfected the art of nodding encouragingly" }
+            ],
+            certifications: [ { name: "Certified Expert in Ctrl+C and Ctrl+V", issuer: "Stack Overflow University", date: "Every Day Since 2020" } ],
+            skills: "Professional Googling, Advanced Copy-Paste Techniques, Turning Coffee into Code, Meeting Muting Mastery, Bug Creation (and occasional fixing), Excel Wizardry, PowerPoint Ninja, Email Writing, Deadline Dodging...",
+            references: "My mom says I'm great, but she might be biased.",
+            miscellaneous: [
+                { title: "Fun Facts", content: "• Can debug code faster than I can explain what's wrong with it\n• Once fixed a bug by staring at it really hard\n• Fluent in 17 programming languages and 0 human languages"},
+                { title: "Hobbies", content: "• Collecting programming socks\n• Teaching my cat to code (progress: limited)\n• Professional Netflix binge-watcher\n• Explaining why my code works on my machine"}
+            ]
+        };
+
+        // Load data from localStorage or use default
+        let appData = JSON.parse(localStorage.getItem('quickCopyData')) || defaultAppData;
+
+        // Save data to localStorage
+        function saveData() {
+            localStorage.setItem('quickCopyData', JSON.stringify(appData));
+        }
+
+        // Reset to empty form
+        function resetData() {
+            if (confirm('⚠️ This will permanently delete all your saved data and clear the entire form. This action cannot be undone.\n\nAre you sure you want to continue?')) {
+                localStorage.removeItem('quickCopyData');
+                // Reset to completely empty data
+                appData = {
+                    personal: { firstName: "", lastName: "" },
+                    address: { line1: "", city: "", province: "", postalCode: "", country: "" },
+                    contact: { email: "", phone: "", linkedin: "", portfolio: "" },
+                    credentials: { username: "", password: "" },
+                    preferences: { salary: "", startDate: "", relocation: "" },
+                    snippets: { summary: "", authQ1: "", authQ2: "" },
+                    education: [],
+                    experience: [],
+                    certifications: [],
+                    skills: "",
+                    references: "",
+                    miscellaneous: []
+                };
+                renderAndBindAll();
+            }
+        }
+
+        const ICONS = {
+            eye: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>`,
+            eyeOff: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7 1.274-4.057 5.064 7 9.542 7 .847 0 1.67.127 2.454.364m-6.082 11.45a1 1 0 01-1.414-1.414l1.414-1.414a1 1 0 011.414 1.414l-1.414 1.414zM12 15a3 3 0 01-3-3m0 0l-1.414-1.414a1 1 0 011.414-1.414l1.414 1.414a1 1 0 01-1.414 1.414z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.75 4.75l14.5 14.5" /></svg>`,
+            copy: `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>`,
+            check: `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>`
+        };
+
+        // --- UTILITY FUNCTIONS ---
+        function copyToClipboard(text, buttonEl) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'absolute';
+            textarea.style.left = '-9999px';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    buttonEl.innerHTML = ICONS.check;
+                    buttonEl.classList.add('copied');
+                    setTimeout(() => {
+                        buttonEl.innerHTML = ICONS.copy;
+                        buttonEl.classList.remove('copied');
+                    }, 1500);
+                } else {
+                    console.error('Fallback: Copying text command was unsuccessful');
+                }
+            } catch (err) {
+                console.error('Copy failed: ', err);
+            }
+            document.body.removeChild(textarea);
+        }
+
+        function createField(id, label, value, { isTextarea = false, type = 'text', getValueFunc = null } = {}) {
+            const inputId = `${id.replace(/\./g, '-')}-input`;
+            const valueAttr = `value="${String(value).replace(/"/g, '&quot;')}"`;
+            const inputElement = isTextarea
+                ? `<textarea id="${inputId}" data-path="${id}" class="block w-full px-3 py-2 pr-12 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm h-28 resize-y">${value}</textarea>`
+                : `<input type="${type}" id="${inputId}" data-path="${id}" class="block w-full px-3 py-2 pr-12 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" ${valueAttr}>`;
+            const passwordToggle = type === 'password' ? `<div class="password-toggle-btn">${ICONS.eye}</div>` : '';
+            return `
+                <div class="mb-4">
+                    <label for="${inputId}" class="block text-sm font-medium text-gray-700 mb-1">${label}</label>
+                    <div class="relative">
+                        ${inputElement}
+                        ${passwordToggle}
+                        <button data-input-id="${inputId}" data-get-value-func-id="${getValueFunc ? id : ''}" type="button" class="copy-btn">${ICONS.copy}</button>
+                    </div>
+                </div>`;
+        }
+
+        // --- RENDER & BIND LOGIC ---
+        function renderAndBindAll() {
+            const container = document.getElementById('main-container');
+            container.innerHTML = '';
+            
+            // Remove existing event listeners to prevent duplicates
+            const newContainer = container.cloneNode(false);
+            container.parentNode.replaceChild(newContainer, container);
+            
+            let allFieldConfigs = [];
+            let htmlToRender = '';
+
+            const createCard = (title, content, colSpan = 'lg:col-span-1') => {
+                 return `<div class="card ${colSpan}">
+                    <h2 class="text-xl font-semibold mb-4 border-b pb-2 text-gray-700 flex items-center">${title}</h2>
+                    <div class="flex-grow">${content}</div>
+                </div>`;
+            }
+
+            // --- LEFT COLUMN ---
+            let leftColumnHTML = '';
+            leftColumnHTML += createCard('Personal Info', `${createField('personal.firstName', 'First Name', appData.personal.firstName)}${createField('personal.lastName', 'Last Name', appData.personal.lastName)}${createField('fullName', 'Full Name', '', { getValueFunc: true })}`);
+            allFieldConfigs.push({ id: 'fullName', getValueFunc: () => `${appData.personal.firstName} ${appData.personal.lastName}` });
+            
+            leftColumnHTML += createCard('Address', `${createField('address.line1', 'Address Line 1', appData.address.line1)}${createField('address.city', 'City', appData.address.city)}<div class="grid grid-cols-2 gap-x-4">${createField('address.province', 'Province', appData.address.province)}${createField('address.postalCode', 'Postal Code', appData.address.postalCode)}</div>${createField('fullAddress', 'Full Address', '', { isTextarea: true, getValueFunc: true })}`);
+            allFieldConfigs.push({ id: 'fullAddress', getValueFunc: () => `${appData.address.line1}\n${appData.address.city}, ${appData.address.province} ${appData.address.postalCode}\n${appData.address.country}` });
+            
+            leftColumnHTML += createCard('Contact', `${createField('contact.email', 'Email', appData.contact.email)}${createField('contact.phone', 'Phone', appData.contact.phone)}${createField('contact.linkedin', 'LinkedIn URL', appData.contact.linkedin)}${createField('contact.portfolio', 'Portfolio URL', appData.contact.portfolio)}`);
+            
+            leftColumnHTML += createCard('Credentials', `${createField('credentials.username', 'Username', appData.credentials.username)}${createField('credentials.password', 'Password', appData.credentials.password, { type: 'password' })}`);
+            
+            leftColumnHTML += createCard('Preferences', `${createField('preferences.salary', 'Desired Salary', appData.preferences.salary)}${createField('preferences.startDate', 'Earliest Start Date', appData.preferences.startDate)}`);
+            htmlToRender += `<div class="flex flex-col gap-6">${leftColumnHTML}</div>`;
+
+
+            // --- MIDDLE & RIGHT COLUMN (Experience) ---
+            let experienceContent = '';
+            appData.experience.forEach((exp, i) => {
+                experienceContent += `<div class="border rounded-lg p-4 mb-4 relative"><button class="absolute top-2 right-2 text-gray-400 hover:text-red-500 remove-item-btn text-2xl font-bold" data-section="experience" data-index="${i}">&times;</button>${createField(`experience.${i}.title`, 'Job Title', exp.title)}${createField(`experience.${i}.company`, 'Company', exp.company)}<div class="grid grid-cols-2 gap-x-4">${createField(`experience.${i}.startDate`, 'Start Date', exp.startDate)}${createField(`experience.${i}.endDate`, 'End Date', exp.endDate)}</div>${createField(`experience.${i}.details`, 'Responsibilities', exp.details, { isTextarea: true })}</div>`;
+            });
+            experienceContent += `<button class="mt-2 w-full text-center py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-semibold text-gray-600 add-item-btn" data-section="experience">Add Experience</button>`;
+            htmlToRender += createCard('Work Experience', experienceContent, 'lg:col-span-2');
+
+            // --- FULL-WIDTH ROWS ---
+            htmlToRender += createCard('Education', appData.education.map((edu, i) => `<div class="border rounded-lg p-4 mb-4 relative"><button class="absolute top-2 right-2 text-gray-400 hover:text-red-500 remove-item-btn text-2xl font-bold" data-section="education" data-index="${i}">&times;</button>${createField(`education.${i}.degree`, 'Degree', edu.degree)}${createField(`education.${i}.university`, 'University', edu.university)}<div class="grid grid-cols-2 gap-x-4">${createField(`education.${i}.startDate`, 'Start Date', edu.startDate)}${createField(`education.${i}.endDate`, 'End Date', edu.endDate)}</div></div>`).join('') + `<button class="mt-2 w-full text-center py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-semibold text-gray-600 add-item-btn" data-section="education">Add Education</button>`, 'lg:col-span-3');
+            
+            htmlToRender += createCard('Skills', `${createField('skills', 'Skills', appData.skills, {isTextarea: true})}`, 'lg:col-span-3');
+            htmlToRender += createCard('Certifications', appData.certifications.map((cert, i) => `<div class="border rounded-lg p-4 mb-4 relative"><button class="absolute top-2 right-2 text-gray-400 hover:text-red-500 remove-item-btn text-2xl font-bold" data-section="certifications" data-index="${i}">&times;</button>${createField(`certifications.${i}.name`, 'Certification Name', cert.name)}${createField(`certifications.${i}.issuer`, 'Issuing Organization', cert.issuer)}</div>`).join('') + `<button class="mt-2 w-full text-center py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-semibold text-gray-600 add-item-btn" data-section="certifications">Add Certification</button>`, 'lg:col-span-3');
+            
+            // Render miscellaneous sections
+            appData.miscellaneous.forEach((item, i) => {
+                const sectionTitle = item.title || 'New Custom Section';
+                htmlToRender += createCard(sectionTitle, `<div class="border rounded-lg p-4 relative"><button class="absolute top-2 right-2 text-gray-400 hover:text-red-500 remove-item-btn text-2xl font-bold" data-section="miscellaneous" data-index="${i}">&times;</button>${createField(`miscellaneous.${i}.title`, 'Custom Title', item.title)}${createField(`miscellaneous.${i}.content`, 'Content', item.content, {isTextarea: true})}</div>`, 'lg:col-span-3');
+            });
+            
+            // Add new section button at the end
+            htmlToRender += `<button class="lg:col-span-3 w-full text-center py-3 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg text-base font-semibold add-item-btn" data-section="miscellaneous">Add New Custom Section</button>`;
+
+            // Get the fresh container reference after replacement
+            const freshContainer = document.getElementById('main-container');
+            freshContainer.innerHTML = htmlToRender;
+            
+            // --- BIND EVENT LISTENERS ---
+            freshContainer.addEventListener('click', function(event) {
+                // Prevent event bubbling
+                event.stopPropagation();
+                
+                const target = event.target;
+                if (!target) return;
+
+                if (target.matches('.copy-btn')) {
+                    const funcId = target.dataset.getValueFuncId;
+                    let textToCopy;
+                    if (funcId) {
+                        const config = allFieldConfigs.find(f => f.id === funcId);
+                        textToCopy = config.getValueFunc();
+                        const inputEl = document.getElementById(`${funcId.replace(/\./g, '-')}-input`);
+                        if(inputEl) inputEl.value = textToCopy;
+                    } else {
+                        textToCopy = document.getElementById(target.dataset.inputId).value;
+                    }
+                    copyToClipboard(textToCopy, target);
+                }
+                else if (target.matches('.add-item-btn')) {
+                    // Prevent multiple rapid clicks
+                    target.disabled = true;
+                    setTimeout(() => target.disabled = false, 500);
+                    
+                    const section = target.dataset.section;
+                    let newItem;
+                    if (section === 'experience') newItem = { title: '', company: '', location: '', startDate: '', endDate: '', details: '' };
+                    else if (section === 'education') newItem = { degree: '', university: '', location: '', startDate: '', endDate: '' };
+                    else if (section === 'certifications') newItem = { name: '', issuer: '', date: '' };
+                    else if (section === 'miscellaneous') newItem = { title: 'New Custom Section', content: '' };
+                    
+                    if(newItem) {
+                        appData[section].push(newItem);
+                        saveData();
+                        renderAndBindAll();
+                    }
+                }
+                else if (target.matches('.remove-item-btn')) {
+                    // Prevent multiple rapid clicks
+                    target.disabled = true;
+                    
+                    const section = target.dataset.section;
+                    const index = parseInt(target.dataset.index);
+                    
+                    if (section && index >= 0 && appData[section] && appData[section][index]) {
+                        appData[section].splice(index, 1);
+                        saveData();
+                        renderAndBindAll();
+                    }
+                }
+                else if (target.matches('.password-toggle-btn')) {
+                    const input = target.previousElementSibling;
+                    const isPassword = input.type === 'password';
+                    input.type = isPassword ? 'text' : 'password';
+                    target.innerHTML = isPassword ? ICONS.eyeOff : ICONS.eye;
+                }
+            });
+
+            freshContainer.addEventListener('input', function(event) {
+                const input = event.target;
+                const path = input.dataset.path;
+                if (!path) return;
+
+                const keys = path.split('.');
+                let current = appData;
+                
+                // Navigate to the correct nested object
+                for (let i = 0; i < keys.length - 1; i++) {
+                    const key = keys[i];
+                    if (current[key] === undefined) {
+                        current[key] = {};
+                    }
+                    current = current[key];
+                }
+                
+                // Set the final value
+                current[keys[keys.length - 1]] = input.value;
+                saveData();
+                
+                // If this is a miscellaneous title field, re-render to update the card title
+                if (path.includes('miscellaneous') && path.includes('title')) {
+                    renderAndBindAll();
+                }
+            });
+        }
+        
+        // Add event listener for reset button
+        document.addEventListener('DOMContentLoaded', function() {
+            renderAndBindAll();
+            
+            // Add reset button event listener
+            document.getElementById('reset-btn').addEventListener('click', resetData);
+        });
+    </script>
+</body>
+</html>
