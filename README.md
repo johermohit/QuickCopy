@@ -1,6 +1,25 @@
+
+# Application Quick Copy
+
+<p align="center">
+	<img src="QuickCopy_Demo.gif" alt="QuickCopy Demo" width="600">
+</p>
+
 # Application Quick Copy
 
 A dynamic HTML/JavaScript tool designed to streamline job applications by providing a one-click copy/paste dashboard for personal information, work experience, education, and more.
+
+
+## Demo
+
+See QuickCopy in action:
+
+<details>
+<summary>Click to watch the full demo video (mp4)</summary>
+
+<video src="DEMO.mp4" controls width="600"></video>
+
+</details>
 
 ## Features
 
